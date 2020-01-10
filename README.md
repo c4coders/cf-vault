@@ -2,21 +2,39 @@
 
 **This repository is not for production use.**
 
-This vault server uses MySQL as a storage backend.
+This vault server uses PostgreSQL as a storage backend.
 
-## Create mysql instance
-
-
-If you are using [Pivotal Web Services](https://run.pivotal.io):
-
-```
-cf create-service cleardb spark vault-db
-```
+## Create postgresql instance
 
 If your are using Pivotal Cloud Foundry:
 
 ```
-cf create-service p-mysql 100mb-dev vault-db
+cf create-service postgresql-10-odb standard vault-db
+```
+
+## Create tables
+PostgreSQL 9.6+
+
+```
+CREATE TABLE vault_kv_store (
+  parent_path TEXT COLLATE "C" NOT NULL,
+  path        TEXT COLLATE "C",
+  key         TEXT COLLATE "C",
+  value       BYTEA,
+  CONSTRAINT pkey PRIMARY KEY (path, key)
+);
+
+CREATE INDEX parent_path_idx ON vault_kv_store (parent_path);
+```
+Store for HAEnabled backend
+```
+CREATE TABLE vault_ha_locks (
+  ha_key                                      TEXT COLLATE "C" NOT NULL,
+  ha_identity                                 TEXT COLLATE "C" NOT NULL,
+  ha_value                                    TEXT COLLATE "C",
+  valid_until                                 TIMESTAMP WITH TIME ZONE NOT NULL,
+  CONSTRAINT ha_key PRIMARY KEY (ha_key)
+);
 ```
 
 ## Deploy Vault
@@ -24,7 +42,7 @@ cf create-service p-mysql 100mb-dev vault-db
 [Download Vault (Linux 64-bit)](https://www.vaultproject.io/downloads.html) and save the binary on this directory.
 
 ```
-cp manifest-example.yml manifest.yml 
+cp manifest-example.yml manifest.yml
 ```
 
 Change `name` if needed, then
@@ -67,7 +85,7 @@ $ cf logs cf-vault --recent
 2017-05-22T23:57:33.10+0900 [APP/PROC/WEB/0]OUT               Listener 1: tcp (addr: "0.0.0.0:8080", cluster address: "0.0.0.0:8081", tls: "disabled")
 2017-05-22T23:57:33.10+0900 [APP/PROC/WEB/0]OUT                Log Level: info
 2017-05-22T23:57:33.10+0900 [APP/PROC/WEB/0]OUT                    Mlock: supported: true, enabled: false
-2017-05-22T23:57:33.10+0900 [APP/PROC/WEB/0]OUT                  Storage: mysql
+2017-05-22T23:57:33.10+0900 [APP/PROC/WEB/0]OUT                  Storage: postgresql
 2017-05-22T23:57:33.10+0900 [APP/PROC/WEB/0]OUT                  Version: Vault v0.7.2
 2017-05-22T23:57:33.10+0900 [APP/PROC/WEB/0]OUT              Version Sha: d28dd5a018294562dbc9a18c95554d52b5d12390
 2017-05-22T23:57:33.10+0900 [APP/PROC/WEB/0]OUT ==> Vault server started! Log data will stream in below:
@@ -78,9 +96,14 @@ Now, you can access Vault via like `https://cf-vault.cfapps.io`. Subdomain shoul
 
 ## Initialize vault
 
-
+If you prefer GUI then in browser
 ```
-export VAULT_ADDR=https://<your-sub-domain>.cfapps.io
+https://<your-sub-domain>.<cf-api-endpoint>
+```
+
+If you prefer CLI then
+```
+export VAULT_ADDR=https://<your-sub-domain>.<cf-api-endpoint>
 vault init
 ```
 

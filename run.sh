@@ -1,38 +1,46 @@
 #!/bin/sh
 
-CLEARDB=`echo $VCAP_SERVICES | grep "cleardb"`
-PMYSQL=`echo $VCAP_SERVICES | grep "p-mysql"`
+# PostgreSQL backend store
+# 	connection sslmode=disable
+#		instance 	 vault-db
+#		database	 vault-db
+#		table(s)	 vault_kv_store
 
-if [ "$CLEARDB" != "" ];then
-	SERVICE="cleardb"
-elif [ "$PMYSQL" != "" ]; then
-	SERVICE="p-mysql"
+POSTGRESQL=`echo $VCAP_SERVICES | grep "postgresql"`
+
+if [ "$POSTGRESQL" != "" ]; then
+	SERVICE="postgresql"
+else
+	echo "No PostgreSQL detected"
+	exit 1
 fi
 
 echo "detected $SERVICE"
 
-HOSTNAME=`echo $VCAP_SERVICES | jq -r '.["'$SERVICE'"][0].credentials.hostname'`
-PASSWORD=`echo $VCAP_SERVICES | jq -r '.["'$SERVICE'"][0].credentials.password'`
-PORT=`echo $VCAP_SERVICES | jq -r '.["'$SERVICE'"][0].credentials.port'`
-USERNAME=`echo $VCAP_SERVICES | jq -r '.["'$SERVICE'"][0].credentials.username'`
+DBHOSTNAME=`echo $VCAP_SERVICES | jq -r '.["'$SERVICE'"][0].credentials.hostname'`
+DBPASSWORD=`echo $VCAP_SERVICES | jq -r '.["'$SERVICE'"][0].credentials.password'`
+DBPORT=`echo $VCAP_SERVICES | jq -r '.["'$SERVICE'"][0].credentials.port'`
+DBUSERNAME=`echo $VCAP_SERVICES | jq -r '.["'$SERVICE'"][0].credentials.username'`
 DATABASE=`echo $VCAP_SERVICES | jq -r '.["'$SERVICE'"][0].credentials.name'`
 
 cat <<EOF > cf.hcl
 disable_mlock = true
 
-storage "mysql" {
-  username = "$USERNAME"
-  password = "$PASSWORD"
-  address = "$HOSTNAME:$PORT"
-  database = "$DATABASE"
-  table = "vault"
-  max_parallel = 4
+api_addr = "https://$APPNAME.$CF_API"
+
+storage "postgresql" {
+	connection_url = "postgres://$DBUSERNAME:$DBPASSWORD@$DBHOSTNAME:$DBPORT/vault-db?sslmode=disable"
+	table = "vault_kv_store"
+	max_parallel = 4
 }
 
 listener "tcp" {
- address = "0.0.0.0:8080"
+ address = "0.0.0.0:$PORT"
  tls_disable = 1
 }
+
+ui = "true"
+
 EOF
 
 echo "#### Starting Vault..."
@@ -40,7 +48,7 @@ echo "#### Starting Vault..."
 ./vault server -config=cf.hcl &
 
 if [ "$VAULT_UNSEAL_KEY1" != "" ];then
-	export VAULT_ADDR='http://127.0.0.1:8080'
+	export VAULT_ADDR='http://127.0.0.1:$PORT'
 	echo "#### Waiting..."
 	sleep 1
 	echo "#### Unsealing..."
@@ -54,5 +62,3 @@ if [ "$VAULT_UNSEAL_KEY1" != "" ];then
 		./vault unseal $VAULT_UNSEAL_KEY3
 	fi
 fi
-
-
