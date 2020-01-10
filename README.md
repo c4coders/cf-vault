@@ -94,6 +94,11 @@ $ cf logs cf-vault --recent
 
 Now, you can access Vault via like `https://cf-vault.cfapps.io`. Subdomain should be different for your case.
 
+**Link to PostgreSQL storage backend**
+```
+https://www.vaultproject.io/docs/configuration/storage/postgresql.html
+```
+
 ## Initialize vault
 
 If you prefer GUI then in browser
