@@ -1,7 +1,42 @@
-*.hcl
-*.yml
-*.md
-*.sh
-*.json
-vault
-vault/*
+# Ignore everything
+*
+# Allow traversing sub-directories
+!*/
+#
+# Ignore output sub-directories in current directory
+bin/
+build/
+target/
+out/
+temp/
+.vscode/
+.settings/
+.idea/
+#
+#Allow .gitignore
+!.gitignore
+#
+# readMe
+!**/readme.txt
+!**/*.md
+#
+# config
+!**/pom.xml
+!**/build.xml
+!**/Dockerfile
+!**/Dockerfile.bak
+!**/*.[Yy][Aa][Mm][Ll]
+!**/*.[Yy][Mm][Ll]
+!**/*.[Tt][Xx][Tt]
+!**/LICENSE
+#
+# JSON
+!**/*.[Jj][Ss][Oo][Nn]
+#
+# XML
+!**/*.[Xx][Mm]{Ll]
+!**/*.[Xx][Ss]{Dd]
+!**/*.[Xx][Jj]{Cc]
+#
+# Vault sh
+!**/*.sh
