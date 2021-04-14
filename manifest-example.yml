@@ -1,7 +1,7 @@
 applications:
 - name: cf-vault
   buildpack: binary_buildpack
-  memory: 64m
+  memory: 128m
   command: './run.sh'
   services:
   - vault-db

@@ -1,4 +1,7 @@
 *.hcl
+*.yml
+*.md
+*.sh
+*.json
 vault
-vcap.json
-manifest.yml
+vault/*

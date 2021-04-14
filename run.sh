@@ -29,7 +29,7 @@ disable_mlock = true
 api_addr = "https://$APPNAME.$CF_API"
 
 storage "postgresql" {
-	connection_url = "postgres://$DBUSERNAME:$DBPASSWORD@$DBHOSTNAME:$DBPORT/vault-db?sslmode=disable"
+	connection_url = "postgres://$DBUSERNAME:$DBPASSWORD@$DBHOSTNAME:$DBPORT/vaultdb?sslmode=disable"
 	table = "vault_kv_store"
 	max_parallel = 4
 }
