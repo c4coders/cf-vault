@@ -23,6 +23,8 @@ DBPORT=`echo $VCAP_SERVICES | jq -r '.["'$SERVICE'"][0].credentials.port'`
 DBUSERNAME=`echo $VCAP_SERVICES | jq -r '.["'$SERVICE'"][0].credentials.username'`
 DATABASE=`echo $VCAP_SERVICES | jq -r '.["'$SERVICE'"][0].credentials.name'`
 
+APPURL=`echo $VCAP_APPLICATION | jq -r '.application_uris[0]'`
+
 cat <<EOF > cf.hcl
 disable_mlock = true
 
@@ -48,17 +50,17 @@ echo "#### Starting Vault..."
 ./vault server -config=cf.hcl &
 
 if [ "$VAULT_UNSEAL_KEY1" != "" ];then
-	export VAULT_ADDR='http://127.0.0.1:$PORT'
+	export VAULT_ADDR="http://127.0.0.1:$PORT"
 	echo "#### Waiting..."
 	sleep 1
 	echo "#### Unsealing..."
 	if [ "$VAULT_UNSEAL_KEY1" != "" ];then
-		./vault unseal $VAULT_UNSEAL_KEY1
+		./vault operator unseal $VAULT_UNSEAL_KEY1
 	fi
 	if [ "$VAULT_UNSEAL_KEY2" != "" ];then
-		./vault unseal $VAULT_UNSEAL_KEY2
+		./vault operator unseal $VAULT_UNSEAL_KEY2
 	fi
 	if [ "$VAULT_UNSEAL_KEY3" != "" ];then
-		./vault unseal $VAULT_UNSEAL_KEY3
+		./vault operator unseal $VAULT_UNSEAL_KEY3
 	fi
 fi
